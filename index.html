@@ -1,3 +1,5 @@
+<script>
+
 const SUPABASE_URL = "https://czyzmttdkbmpveltblhi.supabase.co";
 const SUPABASE_KEY = "sb_publishable_171aiUz5MImgcOyKeSatUQ_fVY3QwI5";
 
@@ -8,7 +10,7 @@ const headers = {
 
 
 /* =========================
-   AMBIL DATA DARI SUPABASE
+   AMBIL DATA SUPABASE
    ========================= */
 
 async function getData() {
@@ -48,6 +50,7 @@ async function getData() {
 
     renderMembers(members);
     renderShows(shows, showMembers);
+
 
   } catch (error) {
 
@@ -152,21 +155,22 @@ function renderShows(shows, showMembers) {
       .filter(Boolean);
 
 
-    const html = showHTML(show, lineup);
-
-    showList.innerHTML += html;
+    showList.innerHTML +=
+      showHTML(show, lineup);
 
   });
 
 
+  const firstShow = shows[0];
+
+  const firstLineup = showMembers
+    .filter(item => item.show_id === firstShow.id)
+    .map(item => item.members?.name)
+    .filter(Boolean);
+
+
   homeShow.innerHTML =
-    showHTML(
-      shows[0],
-      showMembers
-        .filter(item => item.show_id === shows[0].id)
-        .map(item => item.members?.name)
-        .filter(Boolean)
-    );
+    showHTML(firstShow, firstLineup);
 
 }
 
@@ -204,6 +208,7 @@ function showHTML(show, lineup) {
 
 
   let dateText = "TBA";
+
 
   if (show.show_date) {
 
@@ -267,15 +272,19 @@ function showPage(page, button) {
     .querySelectorAll(".page")
     .forEach(p => p.classList.remove("active"));
 
+
   document
     .getElementById(page)
     .classList.add("active");
+
 
   document
     .querySelectorAll("nav button")
     .forEach(b => b.classList.remove("active"));
 
+
   button.classList.add("active");
+
 
   window.scrollTo(0, 0);
 
@@ -287,3 +296,5 @@ function showPage(page, button) {
    ========================= */
 
 getData();
+
+</script>
