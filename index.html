@@ -1,300 +1,426 @@
-<script>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AMORETTE Member App</title>
 
-const SUPABASE_URL = "https://czyzmttdkbmpveltblhi.supabase.co";
-const SUPABASE_KEY = "sb_publishable_171aiUz5MImgcOyKeSatUQ_fVY3QwI5";
-
-const headers = {
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`
-};
-
-
-/* =========================
-   AMBIL DATA SUPABASE
-   ========================= */
-
-async function getData() {
-
-  try {
-
-    const [membersRes, showsRes, showMembersRes] =
-      await Promise.all([
-
-        fetch(
-          `${SUPABASE_URL}/rest/v1/members?select=id,name,emoji,role&is_active=eq.true&order=id`,
-          { headers }
-        ),
-
-        fetch(
-          `${SUPABASE_URL}/rest/v1/shows?select=id,title,show_date,location,time,notes&order=show_date.asc`,
-          { headers }
-        ),
-
-        fetch(
-          `${SUPABASE_URL}/rest/v1/show_members?select=show_id,member_id,members(name)&order=show_id`,
-          { headers }
-        )
-
-      ]);
-
-
-    if (!membersRes.ok || !showsRes.ok || !showMembersRes.ok) {
-      throw new Error("Gagal mengambil data Supabase");
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fff7fa;
+      color: #3d3035;
+      padding-bottom: 80px;
+    }
 
-    const members = await membersRes.json();
-    const shows = await showsRes.json();
-    const showMembers = await showMembersRes.json();
+    header {
+      background: linear-gradient(135deg, #ffd9e6, #fff0f5);
+      padding: 28px 20px 24px;
+      border-radius: 0 0 28px 28px;
+    }
 
+    .logo {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
 
-    renderMembers(members);
-    renderShows(shows, showMembers);
+    .tagline {
+      margin-top: 5px;
+      font-size: 13px;
+      color: #8d6876;
+    }
 
+    main {
+      padding: 20px 16px;
+      max-width: 600px;
+      margin: auto;
+    }
 
-  } catch (error) {
+    .welcome {
+      margin-bottom: 22px;
+    }
 
-    console.error(error);
+    .welcome h1 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
 
-    document.getElementById("memberList").innerHTML = `
-      <div class="empty">
-        Gagal memuat data member.
+    .welcome p {
+      color: #8d737c;
+      font-size: 14px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 5px 20px rgba(150, 80, 110, .08);
+    }
+
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    .show-card {
+      border-left: 5px solid #f39ab8;
+    }
+
+    .show-title {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .show-info {
+      color: #8d737c;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #ffe0eb;
+      color: #c85d82;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .lineup {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .member-chip {
+      background: #fff0f5;
+      border-radius: 14px;
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+
+    .member-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .member {
+      background: #fff5f8;
+      border-radius: 18px;
+      padding: 18px 10px;
+      text-align: center;
+    }
+
+    .member-icon {
+      font-size: 35px;
+      margin-bottom: 7px;
+    }
+
+    .member-name {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .member-role {
+      color: #9a7c87;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      height: 68px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 -4px 18px rgba(0,0,0,.08);
+      z-index: 10;
+    }
+
+    nav button {
+      border: none;
+      background: none;
+      color: #9b7b87;
+      font-size: 11px;
+      padding: 8px;
+    }
+
+    nav button span {
+      display: block;
+      font-size: 21px;
+      margin-bottom: 2px;
+    }
+
+    nav button.active {
+      color: #d75f88;
+      font-weight: 700;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 25px 10px;
+      color: #a18a92;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">AMORETTE ♡</div>
+    <div class="tagline">8 HEARTS, 1 RHYTHM</div>
+  </header>
+
+  <main>
+
+    <!-- HOME -->
+    <section id="home" class="page active">
+      <div class="welcome">
+        <h1>Hi, AMORETTE! 💗</h1>
+        <p>Member space untuk update show, lineup, dan informasi grup.</p>
       </div>
-    `;
 
-    document.getElementById("showList").innerHTML = `
       <div class="card">
-        <div class="empty">
-          Gagal memuat data show.
-        </div>
+        <h2>📢 Latest Update</h2>
+        <p><b>Lineup bisa berbeda tiap show.</b></p>
+        <p style="font-size:13px;color:#8d737c;margin-top:5px;">
+          Cek detail setiap show untuk mengetahui member yang tampil.
+        </p>
       </div>
-    `;
 
-  }
-
-}
-
-
-/* =========================
-   MEMBER
-   ========================= */
-
-function renderMembers(members) {
-
-  const memberList =
-    document.getElementById("memberList");
-
-  memberList.innerHTML = "";
-
-  members.forEach(member => {
-
-    memberList.innerHTML += `
-      <div class="member">
-
-        <div class="member-icon">
-          ${member.emoji || "💗"}
-        </div>
-
-        <div class="member-name">
-          ${member.name}
-        </div>
-
-        <div class="member-role">
-          ${member.role || "Member"}
-        </div>
-
-      </div>
-    `;
-
-  });
-
-}
-
-
-/* =========================
-   SHOW
-   ========================= */
-
-function renderShows(shows, showMembers) {
-
-  const showList =
-    document.getElementById("showList");
-
-  const homeShow =
-    document.getElementById("homeShow");
-
-
-  showList.innerHTML = "";
-
-
-  if (shows.length === 0) {
-
-    showList.innerHTML = `
       <div class="card">
-        <div class="empty">
-          Belum ada show.
-        </div>
+        <h2>🎀 Upcoming Show</h2>
+        <div id="homeShow"></div>
       </div>
-    `;
+    </section>
 
-    homeShow.innerHTML = `
-      <div class="empty">
-        Belum ada upcoming show.
+    <!-- MEMBER -->
+    <section id="members" class="page">
+      <div class="welcome">
+        <h1>Our Members 💕</h1>
+        <p>Member AMORETTE</p>
       </div>
-    `;
 
-    return;
-  }
+      <div class="card">
+        <div id="memberList" class="member-grid"></div>
+      </div>
+    </section>
+
+    <!-- SHOW -->
+    <section id="shows" class="page">
+      <div class="welcome">
+        <h1>Shows 🎤</h1>
+        <p>Daftar performance dan lineup AMORETTE.</p>
+      </div>
+
+      <div id="showList"></div>
+    </section>
+
+  </main>
+
+  <nav>
+    <button class="active" onclick="showPage('home', this)">
+      <span>🏠</span>Home
+    </button>
+
+    <button onclick="showPage('members', this)">
+      <span>💗</span>Member
+    </button>
+
+    <button onclick="showPage('shows', this)">
+      <span>🎤</span>Shows
+    </button>
+  </nav>
+
+  <script>
+
+    /* =========================
+       DATA MEMBER
+       ========================= */
+
+    const members = [
+      { name: "Jeje", icon: "🐬" },
+      { name: "Cella", icon: "🍋" },
+      { name: "Aya", icon: "🐺" },
+      { name: "Awl", icon: "🍀" },
+      { name: "Pici", icon: "🐟" },
+      { name: "Abil", icon: "🦭" },
+      { name: "Dea", icon: "🦜" },
+      { name: "Shaka", icon: "🐈‍⬛" }
+    ];
+
+    /* =========================
+       DATA SHOW
+       ========================= */
+
+    const shows = [
+      {
+        title: "AMORETTE Performance",
+        date: "26 September 2026",
+        place: "Banjarmasin",
+        time: "TBA",
+
+        // LINEUP BISA BERBEDA TIAP SHOW
+        lineup: [
+          "Jeje",
+          "Cella",
+          "Aya",
+          "Awl",
+          "Pici",
+          "Abil",
+          "Dea",
+          "Shaka"
+        ]
+      },
+
+      {
+        title: "Show Berikutnya",
+        date: "TBA",
+        place: "TBA",
+        time: "TBA",
+        lineup: []
+      }
+    ];
 
 
-  shows.forEach(show => {
+    /* =========================
+       TAMPILKAN MEMBER
+       ========================= */
 
-    const lineup = showMembers
-      .filter(item => item.show_id === show.id)
-      .map(item => item.members?.name)
-      .filter(Boolean);
+    const memberList = document.getElementById("memberList");
 
-
-    showList.innerHTML +=
-      showHTML(show, lineup);
-
-  });
-
-
-  const firstShow = shows[0];
-
-  const firstLineup = showMembers
-    .filter(item => item.show_id === firstShow.id)
-    .map(item => item.members?.name)
-    .filter(Boolean);
-
-
-  homeShow.innerHTML =
-    showHTML(firstShow, firstLineup);
-
-}
-
-
-/* =========================
-   FORMAT SHOW
-   ========================= */
-
-function showHTML(show, lineup) {
-
-  let lineupHTML = "";
-
-
-  if (lineup.length > 0) {
-
-    lineup.forEach(name => {
-
-      lineupHTML += `
-        <div class="member-chip">
-          ${name}
+    members.forEach(member => {
+      memberList.innerHTML += `
+        <div class="member">
+          <div class="member-icon">${member.icon}</div>
+          <div class="member-name">${member.name}</div>
+          <div class="member-role">AMORETTE</div>
         </div>
       `;
-
     });
 
-  } else {
 
-    lineupHTML = `
-      <div class="empty">
-        Lineup belum ditentukan.
-      </div>
-    `;
+    /* =========================
+       TAMPILKAN SHOW
+       ========================= */
 
-  }
+    const showList = document.getElementById("showList");
 
+    function showHTML(show) {
 
-  let dateText = "TBA";
+      let lineupHTML = "";
 
+      if (show.lineup.length > 0) {
 
-  if (show.show_date) {
+        show.lineup.forEach(name => {
+          lineupHTML += `
+            <div class="member-chip">${name}</div>
+          `;
+        });
 
-    const date =
-      new Date(show.show_date + "T00:00:00");
+      } else {
 
-    dateText =
-      date.toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-      });
+        lineupHTML = `
+          <div class="empty">
+            Lineup belum ditentukan.
+          </div>
+        `;
+      }
 
-  }
+      return `
+        <div class="card show-card">
 
+          <div class="show-title">
+            ${show.title}
+          </div>
 
-  return `
-    <div class="card show-card">
+          <div class="show-info">
+            📅 ${show.date}
+          </div>
 
-      <div class="show-title">
-        ${show.title}
-      </div>
+          <div class="show-info">
+            📍 ${show.place}
+          </div>
 
-      <div class="show-info">
-        📅 ${dateText}
-      </div>
+          <div class="show-info">
+            🕐 ${show.time}
+          </div>
 
-      <div class="show-info">
-        📍 ${show.location || "TBA"}
-      </div>
+          <div class="badge">
+            UPCOMING
+          </div>
 
-      <div class="show-info">
-        🕐 ${show.time || "TBA"}
-      </div>
+          <h3 style="font-size:14px;margin-top:16px;">
+            Lineup
+          </h3>
 
-      <div class="badge">
-        UPCOMING
-      </div>
+          <div class="lineup">
+            ${lineupHTML}
+          </div>
 
-      <h3 style="font-size:14px;margin-top:16px;">
-        Lineup
-      </h3>
+        </div>
+      `;
+    }
 
-      <div class="lineup">
-        ${lineupHTML}
-      </div>
-
-    </div>
-  `;
-
-}
-
-
-/* =========================
-   NAVIGATION
-   ========================= */
-
-function showPage(page, button) {
-
-  document
-    .querySelectorAll(".page")
-    .forEach(p => p.classList.remove("active"));
+    shows.forEach(show => {
+      showList.innerHTML += showHTML(show);
+    });
 
 
-  document
-    .getElementById(page)
-    .classList.add("active");
+    /* =========================
+       HOME SHOW
+       ========================= */
+
+    document.getElementById("homeShow").innerHTML =
+      showHTML(shows[0]);
 
 
-  document
-    .querySelectorAll("nav button")
-    .forEach(b => b.classList.remove("active"));
+    /* =========================
+       NAVIGATION
+       ========================= */
 
+    function showPage(page, button) {
 
-  button.classList.add("active");
+      document.querySelectorAll(".page")
+        .forEach(p => p.classList.remove("active"));
 
+      document.getElementById(page)
+        .classList.add("active");
+lc
+      document.querySelectorAll("nav button")
+        .forEach(b => b.classList.remove("active"));
 
-  window.scrollTo(0, 0);
+      button.classList.add("active");
 
-}
+      window.scrollTo(0, 0);
+    }
 
+  </script>
 
-/* =========================
-   JALANKAN APP
-   ========================= */
-
-getData();
-
-</script>
+</body>
+</html>
